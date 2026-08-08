@@ -163,7 +163,12 @@
     position: static;
     opacity: 1; transition: opacity 0.4s ease;
   }
-  .stroke-text__svg { display: block; width: 100%; height: auto; overflow: visible; }
+  /* Width-driven so the name fills the column on narrow screens, capped per line so a
+     3-line stack does not swallow the hero on wide ones. */
+  .stroke-text__svg {
+    display: block; width: 100%; height: auto; overflow: visible;
+    max-height: calc(var(--stroke-text-lines, 3) * clamp(3rem, 16vw, 4.5rem));
+  }
   h1:has(.stroke-text.is-measured) .hero-name-text {
     position: absolute; width: 1px; height: 1px;
     overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
@@ -410,7 +415,7 @@
   <div class="container hero-content">
     <p class="hero-eyebrow reveal">Desenvolvedor em Formação</p>
     <h1 class="reveal reveal-delay-1">
-      <span class="hero-name-text">Marcos<br>Pires <em>Cardoso</em></span>
+      <span class="hero-name-text">Marcos<br>Pires<br><em>Cardoso</em></span>
       <span class="stroke-text" id="hero-name" aria-hidden="true"></span>
     </h1>
     <p class="hero-desc reveal reveal-delay-2">
@@ -709,7 +714,8 @@ Transformar a relação das pessoas com o dinheiro digital, capacitando-as a tom
       const wordmark = initStrokeText(document.getElementById('hero-name'), {
         lines: [
           [{ text: 'Marcos' }],
-          [{ text: 'Pires ' }, { text: 'Cardoso', strokeColor: '#C8B97A', fillColor: '#C8B97A' }]
+          [{ text: 'Pires' }],
+          [{ text: 'Cardoso', strokeColor: '#C8B97A', fillColor: '#C8B97A' }]
         ],
         fontFamily: "'Syne', sans-serif",
         fontWeight: 800,

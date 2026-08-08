@@ -27,7 +27,8 @@ export function initStrokeText(container, options = {}) {
   const fillEnabled = fillMode !== 'none';
 
   const svg = document.createElementNS(SVG_NS, 'svg');
-  svg.setAttribute('preserveAspectRatio', 'xMidYMid meet');
+  // xMin keeps the wordmark flush left when max-height letterboxes it on wide screens.
+  svg.setAttribute('preserveAspectRatio', 'xMinYMid meet');
   svg.setAttribute('aria-hidden', 'true');
   svg.classList.add('stroke-text__svg');
 
@@ -117,7 +118,7 @@ export function initStrokeText(container, options = {}) {
     const pad = Math.max(strokeWidth, fontSize * 0.1);
     box = { x: bbox.x - pad, y: bbox.y - pad, width: bbox.width + pad * 2, height: bbox.height + pad * 2 };
     svg.setAttribute('viewBox', `${box.x} ${box.y} ${box.width} ${box.height}`);
-    svg.style.setProperty('--stroke-text-ratio', String(box.height / box.width));
+    container.style.setProperty('--stroke-text-lines', String(lines.length));
 
     wipeRect.setAttribute('x', String(box.x));
     wipeRect.setAttribute('y', String(box.y));
