@@ -88,9 +88,37 @@
   footer { position: relative; z-index: 1; }
 
   /* ── ANIMATED BACKGROUNDS ── */
+  /* Gutter width: what the 1280px column leaves over on each side. Zero at or below
+     1280px, which is what keeps the rails off phones and narrow laptops. */
+  :root { --gutter: max(0px, (100vw - 1280px) / 2); }
+
   .dot-field {
     position: fixed; inset: 0; z-index: 0;
     pointer-events: none;
+    /* Hands the outer edges over to the glitch rails instead of stacking both
+       animations in the same pixels. */
+    -webkit-mask-image: linear-gradient(to right, transparent 0, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0, #000 var(--gutter), #000 calc(100% - var(--gutter)), transparent 100%);
+  }
+
+  /* ── GLITCH RAILS ──
+     Live only in the margin the content column cannot reach, and fade toward the
+     text so the reading column never competes with moving glyphs. */
+  .gutter-rail {
+    position: fixed; top: 0; bottom: 0; z-index: 0;
+    width: var(--gutter);
+    pointer-events: none; overflow: hidden;
+    opacity: 0.5;
+  }
+  .gutter-rail--left { left: 0; }
+  .gutter-rail--right { right: 0; }
+  .gutter-rail--left {
+    -webkit-mask-image: linear-gradient(to right, #000 0%, rgba(0,0,0,0.5) 55%, transparent 100%);
+    mask-image: linear-gradient(to right, #000 0%, rgba(0,0,0,0.5) 55%, transparent 100%);
+  }
+  .gutter-rail--right {
+    -webkit-mask-image: linear-gradient(to left, #000 0%, rgba(0,0,0,0.5) 55%, transparent 100%);
+    mask-image: linear-gradient(to left, #000 0%, rgba(0,0,0,0.5) 55%, transparent 100%);
   }
   /* Masked rather than darkened by an overlay: the bends thin out over the copy column
      so hero text keeps its contrast, and bloom on the open right side. */
@@ -422,6 +450,8 @@
 <body>
 
 <div class="dot-field" id="dot-field" aria-hidden="true"></div>
+<div class="gutter-rail gutter-rail--left" id="rail-left" aria-hidden="true"></div>
+<div class="gutter-rail gutter-rail--right" id="rail-right" aria-hidden="true"></div>
 
 <!-- NAV -->
 <nav id="navbar">
@@ -730,6 +760,34 @@ Transformar a relação das pessoas com o dinheiro digital, capacitando-as a tom
       document.addEventListener('visibilitychange', () => {
         document.hidden ? field.stop() : field.start();
       });
+    })
+    .catch(() => {});
+
+  // Glitch rails: only meaningful once the viewport is wider than the content column,
+  // so they idle at zero width on phones rather than costing a loop there.
+  import('./assets/js/letter-glitch.js')
+    .then(({ initLetterGlitch }) => {
+      const els = [document.getElementById('rail-left'), document.getElementById('rail-right')];
+      const rails = els.map((el) => initLetterGlitch(el, {
+        glitchColors: ['#EF4444', '#ffffff', '#EAB308'],
+        glitchSpeed: 50,
+        smooth: true
+      })).filter(Boolean);
+      if (!rails.length) return;
+
+      if (reduceMotion) {
+        rails.forEach((r) => r.showStatic());
+        return;
+      }
+
+      const hasGutter = () => els[0].getBoundingClientRect().width > 8;
+      const sync = () => {
+        const on = hasGutter() && !document.hidden;
+        rails.forEach((r) => (on ? r.start() : r.stop()));
+      };
+      window.addEventListener('resize', sync, { passive: true });
+      document.addEventListener('visibilitychange', sync);
+      sync();
     })
     .catch(() => {});
 
