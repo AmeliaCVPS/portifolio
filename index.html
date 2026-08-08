@@ -76,7 +76,28 @@
   /* ── LAYOUT ── */
   .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
 
-  section { padding: 7rem 0; }
+  section { padding: 7rem 0; position: relative; z-index: 1; }
+  footer { position: relative; z-index: 1; }
+
+  /* ── ANIMATED BACKGROUNDS ── */
+  .dot-field {
+    position: fixed; inset: 0; z-index: 0;
+    pointer-events: none;
+  }
+  /* Masked rather than darkened by an overlay: the bends thin out over the copy column
+     so hero text keeps its contrast, and bloom on the open right side. */
+  .hero-bends {
+    position: absolute; inset: 0; z-index: 0;
+    pointer-events: none;
+    -webkit-mask-image:
+      linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 30%, #000 72%),
+      linear-gradient(100deg, transparent 0%, rgba(0,0,0,0.10) 32%, rgba(0,0,0,0.60) 60%, #000 88%);
+    mask-image:
+      linear-gradient(to bottom, transparent 0%, rgba(0,0,0,0.35) 30%, #000 72%),
+      linear-gradient(100deg, transparent 0%, rgba(0,0,0,0.10) 32%, rgba(0,0,0,0.60) 60%, #000 88%);
+    -webkit-mask-composite: source-in;
+    mask-composite: intersect;
+  }
 
   /* ── FADE IN ── */
   .reveal {
@@ -109,21 +130,6 @@
     padding-top: 6rem;
     position: relative; overflow: hidden;
   }
-  .hero-grid-bg {
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(var(--border) 1px, transparent 1px),
-      linear-gradient(90deg, var(--border) 1px, transparent 1px);
-    background-size: 60px 60px;
-    mask-image: radial-gradient(ellipse 80% 60% at 50% 50%, black 30%, transparent 100%);
-  }
-  .hero-glow {
-    position: absolute; top: 20%; left: 50%;
-    transform: translateX(-50%);
-    width: 600px; height: 300px;
-    background: radial-gradient(ellipse, rgba(200,185,122,0.07) 0%, transparent 70%);
-    pointer-events: none;
-  }
   .hero-content { position: relative; z-index: 1; }
   .hero-eyebrow {
     font-family: var(--font-mono);
@@ -144,6 +150,24 @@
     margin-bottom: 1.5rem;
   }
   h1 em { font-style: normal; color: var(--accent); }
+
+  /* The live text stays the visible heading until the SVG has been measured, so a
+     failed or slow module leaves the name readable rather than blank. */
+  h1 { position: relative; }
+  .stroke-text {
+    position: absolute; top: 0; left: 0;
+    width: 100%; line-height: 0;
+    opacity: 0; pointer-events: none;
+  }
+  .stroke-text.is-measured {
+    position: static;
+    opacity: 1; transition: opacity 0.4s ease;
+  }
+  .stroke-text__svg { display: block; width: 100%; height: auto; overflow: visible; }
+  h1:has(.stroke-text.is-measured) .hero-name-text {
+    position: absolute; width: 1px; height: 1px;
+    overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap;
+  }
   .hero-desc {
     font-size: 17px; font-weight: 300;
     color: var(--text-secondary); line-height: 1.75;
@@ -366,6 +390,8 @@
 </head>
 <body>
 
+<div class="dot-field" id="dot-field" aria-hidden="true"></div>
+
 <!-- NAV -->
 <nav id="navbar">
   <a class="nav-logo" href="#hero">MPC<span>.</span></a>
@@ -380,11 +406,13 @@
 
 <!-- HERO -->
 <section id="hero">
-  <div class="hero-grid-bg"></div>
-  <div class="hero-glow"></div>
+  <div class="hero-bends" id="hero-bends"></div>
   <div class="container hero-content">
     <p class="hero-eyebrow reveal">Desenvolvedor em Formação</p>
-    <h1 class="reveal reveal-delay-1">Marcos<br>Pires <em>Cardoso</em></h1>
+    <h1 class="reveal reveal-delay-1">
+      <span class="hero-name-text">Marcos<br>Pires <em>Cardoso</em></span>
+      <span class="stroke-text" id="hero-name" aria-hidden="true"></span>
+    </h1>
     <p class="hero-desc reveal reveal-delay-2">
       Estudante de Ensino Médio construindo soluções reais com Python e JavaScript.
       Cada linha de código é um passo concreto em direção a uma carreira em tecnologia.
@@ -658,6 +686,82 @@ Transformar a relação das pessoas com o dinheiro digital, capacitando-as a tom
       if (target) { e.preventDefault(); target.scrollIntoView({ behavior: 'smooth' }); }
     });
   });
+</script>
+
+<script type="module">
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const finePointer = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  // Dot field: no cursor to react to on touch, so it stays a static texture there.
+  import('./assets/js/dot-field.js')
+    .then(({ initDotField }) => {
+      const field = initDotField(document.getElementById('dot-field'));
+      if (reduceMotion || !finePointer) return;
+      field.start();
+      document.addEventListener('visibilitychange', () => {
+        document.hidden ? field.stop() : field.start();
+      });
+    })
+    .catch(() => {});
+
+  import('./assets/js/stroke-text.js')
+    .then(async ({ initStrokeText }) => {
+      const wordmark = initStrokeText(document.getElementById('hero-name'), {
+        lines: [
+          [{ text: 'Marcos' }],
+          [{ text: 'Pires ' }, { text: 'Cardoso', strokeColor: '#C8B97A', fillColor: '#C8B97A' }]
+        ],
+        fontFamily: "'Syne', sans-serif",
+        fontWeight: 800,
+        fontSize: 128,
+        letterSpacing: -4,
+        strokeColor: '#F0EEE8',
+        fillColor: '#F0EEE8',
+        strokeWidth: 1.1,
+        drawDuration: 1.5,
+        stagger: 0.045,
+        fillDelay: 0.15,
+        loopPause: 3
+      });
+
+      await wordmark.ready;
+      if (reduceMotion) {
+        wordmark.showEndState();
+        return;
+      }
+
+      const hero = document.getElementById('hero');
+      let onScreen = true;
+      const sync = () => (onScreen && !document.hidden ? wordmark.start() : wordmark.stop());
+      new IntersectionObserver(([e]) => {
+        onScreen = e.isIntersecting;
+        sync();
+      }).observe(hero);
+      document.addEventListener('visibilitychange', sync);
+      sync();
+    })
+    .catch(() => {});
+
+  import('./assets/js/color-bends.js')
+    .then(({ initColorBends }) => {
+      const hero = document.getElementById('hero');
+      const bends = initColorBends(document.getElementById('hero-bends'), {
+        maxPixelRatio: finePointer ? 2 : 1.5
+      });
+      if (!bends || reduceMotion) return;
+
+      let onScreen = true;
+      const sync = () => (onScreen && !document.hidden ? bends.start() : bends.stop());
+
+      new IntersectionObserver(([entry]) => {
+        onScreen = entry.isIntersecting;
+        sync();
+      }).observe(hero);
+
+      document.addEventListener('visibilitychange', sync);
+      sync();
+    })
+    .catch(() => {});
 </script>
 </body>
 </html>
