@@ -48,11 +48,13 @@
   /* ── NAV ── */
   nav {
     position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1.25rem 2.5rem;
+    padding: 1.25rem 0;
     border-bottom: 1px solid transparent;
     transition: border-color 0.3s, background 0.3s, backdrop-filter 0.3s;
   }
+  /* Shares .container so the logo sits on the same left edge as the content below it,
+     while the bar itself still spans the full width. */
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; }
   nav.scrolled {
     border-color: var(--border);
     background: rgba(10,10,9,0.85);
@@ -73,8 +75,14 @@
   }
   .nav-links a:hover { color: var(--text-primary); }
 
-  /* ── LAYOUT ── */
-  .container { max-width: 900px; margin: 0 auto; padding: 0 2rem; }
+  /* ── LAYOUT ──
+     One measure for the page shell, a separate one for prose. The shell is wide so
+     grids reach the edges of the canvas; running text is capped further down at the
+     readable measure instead of inheriting this width. */
+  .container {
+    width: 100%; max-width: 1280px; margin: 0 auto;
+    padding: 0 clamp(1.25rem, 4vw, 3rem);
+  }
 
   section { padding: 7rem 0; position: relative; z-index: 1; }
   footer { position: relative; z-index: 1; }
@@ -131,6 +139,22 @@
     position: relative; overflow: hidden;
   }
   .hero-content { position: relative; z-index: 1; }
+  /* Asymmetric on wide screens: the name leads on the left, the portrait anchors the
+     right so the canvas carries weight on both sides instead of one centred column.
+     Stacks below 900px, where a single column is the honest structure. */
+  .hero-layout { display: grid; gap: clamp(2.5rem, 5vw, 4rem); align-items: center; }
+  @media (min-width: 900px) {
+    .hero-layout { grid-template-columns: minmax(0, 1.35fr) minmax(0, 0.65fr); }
+  }
+  .hero-portrait { margin: 0; justify-self: start; max-width: 420px; width: 100%; }
+  .hero-portrait img {
+    display: block; width: 100%; height: auto; aspect-ratio: 1;
+    border-radius: 50%; object-fit: cover; object-position: center top;
+    border: 1px solid rgba(200,185,122,0.28);
+  }
+  @media (max-width: 899px) {
+    .hero-portrait { max-width: 260px; justify-self: start; }
+  }
   .hero-eyebrow {
     font-family: var(--font-mono);
     font-size: 12px; color: var(--accent);
@@ -167,7 +191,7 @@
      3-line stack does not swallow the hero on wide ones. */
   .stroke-text__svg {
     display: block; width: 100%; height: auto; overflow: visible;
-    max-height: calc(var(--stroke-text-lines, 3) * clamp(3rem, 16vw, 4.5rem));
+    max-height: calc(var(--stroke-text-lines, 3) * clamp(3.25rem, 9vw, 6.5rem));
   }
   h1:has(.stroke-text.is-measured) .hero-name-text {
     position: absolute; width: 1px; height: 1px;
@@ -248,7 +272,7 @@
   /* ── SKILLS ── */
   #skills { border-top: 1px solid var(--border); }
   .skills-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
     gap: 10px;
   }
   .skill-chip {
@@ -264,8 +288,11 @@
 
   /* ── PROJETOS ── */
   #projetos { border-top: 1px solid var(--border); }
+  /* auto-fit, so the count follows the content: three personal projects fill a row of
+     three, and the two client projects stretch into wider featured cards instead of
+     leaving a dead track beside them. */
   .projects-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
     gap: 16px;
   }
   .project-card {
@@ -349,7 +376,7 @@
     color: var(--text-secondary); margin-bottom: 3rem; max-width: 480px;
   }
   .contact-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
     gap: 12px;
   }
   .contact-card {
@@ -384,9 +411,8 @@
 
   /* ── MOBILE ── */
   @media (max-width: 640px) {
-    nav { padding: 1rem 1.25rem; }
+    nav { padding: 1rem 0; }
     .nav-links { display: none; }
-    .container { padding: 0 1.25rem; }
     section { padding: 4.5rem 0; }
     .projects-grid { grid-template-columns: 1fr; }
     .hero-cta .btn { font-size: 13px; padding: 10px 18px; }
@@ -399,52 +425,50 @@
 
 <!-- NAV -->
 <nav id="navbar">
-  <a class="nav-logo" href="#hero">MPC<span>.</span></a>
-  <ul class="nav-links">
-    <li><a href="#percurso">Percurso</a></li>
-    <li><a href="#skills">Skills</a></li>
-    <li><a href="#projetos">Projetos</a></li>
-    <li><a href="#clientes">Clientes</a></li>
-    <li><a href="#contato">Contato</a></li>
-  </ul>
+  <div class="container nav-inner">
+    <a class="nav-logo" href="#hero">MPC<span>.</span></a>
+    <ul class="nav-links">
+      <li><a href="#percurso">Percurso</a></li>
+      <li><a href="#skills">Skills</a></li>
+      <li><a href="#projetos">Projetos</a></li>
+      <li><a href="#clientes">Clientes</a></li>
+      <li><a href="#contato">Contato</a></li>
+    </ul>
+  </div>
 </nav>
 
 <!-- HERO -->
 <section id="hero">
   <div class="hero-bends" id="hero-bends"></div>
   <div class="container hero-content">
-    <p class="hero-eyebrow reveal">Desenvolvedor em Formação</p>
-    <h1 class="reveal reveal-delay-1">
-      <span class="hero-name-text">Marcos<br>Pires<br><em>Cardoso</em></span>
-      <span class="stroke-text" id="hero-name" aria-hidden="true"></span>
-    </h1>
-    <p class="hero-desc reveal reveal-delay-2">
-      Estudante de Ensino Médio construindo soluções reais com Python e JavaScript.
-      Cada linha de código é um passo concreto em direção a uma carreira em tecnologia.
-    </p>
-    <div class="hero-badges reveal reveal-delay-3">
-      <span class="badge"><span class="dot"></span>Colégio Visconde de Porto Seguro</span>
-      <span class="badge"><span class="dot"></span>Python · Hashtag</span>
-      <span class="badge"><span class="dot"></span>JavaScript · Cisco</span>
-      <span class="badge"><span class="dot"></span>Inglês Intermediário</span>
-    </div>
-    <div class="hero-cta reveal reveal-delay-4">
-      <a href="#projetos" class="btn btn-primary">Ver Projetos →</a>
-      <a href="#contato" class="btn btn-ghost">Entrar em Contato</a>
+    <div class="hero-layout">
+      <div class="hero-copy">
+        <p class="hero-eyebrow reveal">Desenvolvedor em Formação</p>
+        <h1 class="reveal reveal-delay-1">
+          <span class="hero-name-text">Marcos<br>Pires<br><em>Cardoso</em></span>
+          <span class="stroke-text" id="hero-name" aria-hidden="true"></span>
+        </h1>
+        <p class="hero-desc reveal reveal-delay-2">
+          Estudante de Ensino Médio construindo soluções reais com Python e JavaScript.
+          Cada linha de código é um passo concreto em direção a uma carreira em tecnologia.
+        </p>
+        <div class="hero-badges reveal reveal-delay-3">
+          <span class="badge"><span class="dot"></span>Colégio Visconde de Porto Seguro</span>
+          <span class="badge"><span class="dot"></span>Python · Hashtag</span>
+          <span class="badge"><span class="dot"></span>JavaScript · Cisco</span>
+          <span class="badge"><span class="dot"></span>Inglês Intermediário</span>
+        </div>
+        <div class="hero-cta reveal reveal-delay-4">
+          <a href="#projetos" class="btn btn-primary">Ver Projetos →</a>
+          <a href="#contato" class="btn btn-ghost">Entrar em Contato</a>
+        </div>
+      </div>
+      <figure class="hero-portrait reveal reveal-delay-3">
+        <img src="eu.jpeg" alt="Retrato de Marcos Pires Cardoso" width="420" height="420">
+      </figure>
     </div>
   </div>
 </section>
-
-<img src="eu.jpeg" alt="Marcos Pires Cardoso" style="
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  object-fit: cover;
-  object-position: center top;
-  border: 2px solid rgba(200,185,122,0.3);
-  margin: 0 auto 1.5rem;
-  display: block;
-">
 
 <!-- PERCURSO -->
 <section id="percurso">
